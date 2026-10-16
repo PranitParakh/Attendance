@@ -1,0 +1,227 @@
+/**
+ * Client-First & Backend-Hybrid Data Layer for Attendly.
+ * Enables 100% free static hosting on Vercel, Netlify, Cloudflare Pages, or GitHub Pages
+ * with zero backend required. Also supports optional local backend when running on desktop.
+ */
+
+import type { AttendanceDataset, UploadResponse, SubjectDetailResponse, AttendanceRecord } from './types';
+import {
+  parseAttendancePdf,
+  calculateSubjectSummaries,
+  calculateOverallSummary,
+} from './clientParser';
+
+const API_BASE = '/api';
+const DATASET_STORAGE_KEY = 'attendly_saved_dataset';
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+    this.name = 'ApiError';
+  }
+}
+
+/**
+ * Upload and parse an attendance PDF.
+ * Executes 100% client-side in the browser using PDF.js.
+ * Also synchronizes with local backend SQLite database if online.
+ */
+export async function uploadAttendancePDF(file: File): Promise<UploadResponse> {
+  try {
+    // 1. Client-side parsing (works 100% offline, on PC and Android)
+    const { metadata, records } = await parseAttendancePdf(file, file.name);
+
+    // 2. Client-side statistics calculation
+    const subjects = calculateSubjectSummaries(records);
+    const overall = calculateOverallSummary(records, subjects);
+
+    // 3. Assemble dataset
+    const dataset: AttendanceDataset = {
+      metadata,
+      records,
+      subjects,
+      overall,
+      imported_at: new Date().toISOString(),
+      source_filename: file.name,
+    };
+
+    // 4. Save locally in localStorage for instant retrieval & offline capability
+    try {
+      localStorage.setItem(DATASET_STORAGE_KEY, JSON.stringify(dataset));
+    } catch (storageErr) {
+      console.warn('Could not cache dataset in localStorage:', storageErr);
+    }
+
+    // 5. Opportunistically sync with local backend if running
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      fetch(`${API_BASE}/attendance/upload`, {
+        method: 'POST',
+        body: formData,
+      }).catch(() => {
+        // Statically hosted; no backend present
+      });
+    } catch {
+      // ignore backend sync error
+    }
+
+    return {
+      success: true,
+      message: 'Attendance imported successfully',
+      dataset,
+      records_count: records.length,
+      error: null,
+    };
+  } catch (err: any) {
+    console.error('Client-side PDF parsing error:', err);
+    throw new ApiError(
+      err?.message || 'Unable to parse attendance PDF. Please ensure this is a valid NMIMS SAP report.',
+      400
+    );
+  }
+}
+
+/**
+ * Get current attendance dataset.
+ * Checks localStorage first, then falls back to backend if available.
+ */
+export async function getCurrentAttendance(): Promise<AttendanceDataset> {
+  // 1. Check local client storage
+  try {
+    const cached = localStorage.getItem(DATASET_STORAGE_KEY);
+    if (cached) {
+      const parsed: AttendanceDataset = JSON.parse(cached);
+      if (parsed && parsed.metadata && Array.isArray(parsed.records)) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse cached dataset from localStorage:', e);
+  }
+
+  // 2. Fall back to backend if available
+  try {
+    const response = await fetch(`${API_BASE}/attendance/current`);
+    if (response.ok) {
+      const data: AttendanceDataset = await response.json();
+      try {
+        localStorage.setItem(DATASET_STORAGE_KEY, JSON.stringify(data));
+      } catch {}
+      return data;
+    }
+  } catch {
+    // Backend offline / not hosted
+  }
+
+  throw new ApiError('No attendance data found. Please upload a PDF first.', 404);
+}
+
+/**
+ * Get detailed data for a specific subject.
+ */
+export async function getSubjectDetail(subjectName: string): Promise<SubjectDetailResponse> {
+  const decoded = decodeURIComponent(subjectName);
+
+  // Try retrieving from current dataset
+  try {
+    const dataset = await getCurrentAttendance();
+    const records = dataset.records.filter(r => r.course_normalized === decoded);
+
+    if (records.length === 0) {
+      throw new ApiError(`Subject '${decoded}' not found`, 404);
+    }
+
+    const summaries = calculateSubjectSummaries(records);
+    records.sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
+
+    return {
+      summary: summaries[0],
+      records,
+    };
+  } catch (e: any) {
+    if (e instanceof ApiError && e.status === 404) throw e;
+  }
+
+  // Fallback to backend API
+  const encoded = encodeURIComponent(subjectName);
+  const response = await fetch(`${API_BASE}/attendance/subjects/${encoded}`);
+  if (!response.ok) {
+    throw new ApiError(`Subject '${decoded}' not found`, response.status);
+  }
+  return response.json();
+}
+
+/**
+ * Delete the current attendance dataset.
+ * Clears client-side cached dataset and notifies backend if available.
+ */
+export async function deleteCurrentAttendance(): Promise<void> {
+  localStorage.removeItem(DATASET_STORAGE_KEY);
+
+  try {
+    await fetch(`${API_BASE}/attendance/current`, {
+      method: 'DELETE',
+    });
+  } catch {
+    // Backend not running / static host
+  }
+}
+
+/**
+ * Check if the application or backend is available.
+ * Returns true because client-side operates autonomously.
+ */
+export async function checkHealth(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(1500) });
+    return res.ok;
+  } catch {
+    // When hosted statically, client-side is 100% functional
+    return true;
+  }
+}
+
+/**
+ * Fetch attendance from the SAP portal directly using Playwright (requires local backend).
+ */
+export async function fetchAttendancePortal(
+  username: string,
+  password: string,
+  headless: boolean = false
+): Promise<UploadResponse> {
+  try {
+    const response = await fetch(`${API_BASE}/attendance/fetch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password, headless }),
+    });
+
+    if (!response.ok) {
+      let msg = `Portal sync failed (${response.status})`;
+      try {
+        const body = await response.json();
+        msg = body.detail || body.message || msg;
+      } catch {}
+      throw new ApiError(msg, response.status);
+    }
+
+    const result: UploadResponse = await response.json();
+    if (result.dataset) {
+      try {
+        localStorage.setItem(DATASET_STORAGE_KEY, JSON.stringify(result.dataset));
+      } catch {}
+    }
+    return result;
+  } catch (err: any) {
+    if (err instanceof ApiError) throw err;
+    throw new ApiError(
+      'Portal sync requires the local Attendly backend runner (start_app.bat). On static hosting, please upload your attendance PDF directly!',
+      503
+    );
+  }
+}
