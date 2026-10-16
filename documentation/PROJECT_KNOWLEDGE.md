@@ -4,6 +4,7 @@
 
 - **Purpose:** Attendly is a local, private web application for analyzing NMIMS SAP attendance reports.
 - **Current status:** Phase 1 is complete.
+- **Repository:** `https://github.com/PranitParakh/Attendance.git` (tracked on branch `main`)
 - **Main features:** PDF parsing, course normalization, attendance calculations, local SQLite persistence, React dashboard, and automated SAP portal sync via Playwright.
 
 ## 2. Technology Stack
