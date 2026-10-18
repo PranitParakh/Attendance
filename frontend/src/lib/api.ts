@@ -171,21 +171,28 @@ export async function deleteCurrentAttendance(): Promise<void> {
 }
 
 /**
- * Check if the application or backend is available.
- * Returns true because client-side operates autonomously.
+ * Check if the Python backend (with Playwright scraper) is actively running.
  */
-export async function checkHealth(): Promise<boolean> {
+export async function isBackendConnected(): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(1500) });
-    return res.ok;
+    const contentType = res.headers.get('content-type') || '';
+    return res.ok && contentType.includes('application/json');
   } catch {
-    // When hosted statically, client-side is 100% functional
-    return true;
+    return false;
   }
 }
 
 /**
- * Fetch attendance from the SAP portal directly using Playwright (requires local backend).
+ * Check if the application is available.
+ * Returns true because the client-side parsing operates autonomously.
+ */
+export async function checkHealth(): Promise<boolean> {
+  return true;
+}
+
+/**
+ * Fetch attendance from the SAP portal directly using Playwright (requires local desktop runner).
  */
 export async function fetchAttendancePortal(
   username: string,
@@ -200,6 +207,14 @@ export async function fetchAttendancePortal(
       },
       body: JSON.stringify({ username, password, headless }),
     });
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new ApiError(
+        'Direct SAP portal scraping requires the local desktop runner (start_app.bat) with Playwright. On web and mobile, please use the Upload PDF tab!',
+        503
+      );
+    }
 
     if (!response.ok) {
       let msg = `Portal sync failed (${response.status})`;
@@ -220,7 +235,7 @@ export async function fetchAttendancePortal(
   } catch (err: any) {
     if (err instanceof ApiError) throw err;
     throw new ApiError(
-      'Portal sync requires the local Attendly backend runner (start_app.bat). On static hosting, please upload your attendance PDF directly!',
+      'Direct SAP portal scraping requires the local desktop runner (start_app.bat) with Playwright. On web and mobile, please use the Upload PDF tab!',
       503
     );
   }

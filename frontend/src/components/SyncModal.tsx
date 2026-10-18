@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, RefreshCw, Loader2, CheckCircle2, Lock, AlertCircle, Globe, ExternalLink } from 'lucide-react';
-import { fetchAttendancePortal } from '../lib/api';
+import { fetchAttendancePortal, isBackendConnected } from '../lib/api';
 
 interface Props {
   isOpen: boolean;
@@ -21,6 +21,7 @@ export default function SyncModal({ isOpen, onClose, onSuccess }: Props) {
   const [password, setPassword] = useState('');
   const [rememberCredentials, setRememberCredentials] = useState(true);
   const [showLiveBrowser, setShowLiveBrowser] = useState(false);
+  const [backendAvailable, setBackendAvailable] = useState<boolean | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStage, setCurrentStage] = useState(1);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -41,6 +42,10 @@ export default function SyncModal({ isOpen, onClose, onSuccess }: Props) {
       setIsProcessing(false);
       setCurrentStage(1);
       setElapsedSeconds(0);
+
+      isBackendConnected().then(available => {
+        setBackendAvailable(available);
+      });
     }
   }, [isOpen]);
 
@@ -132,7 +137,20 @@ export default function SyncModal({ isOpen, onClose, onSuccess }: Props) {
         </div>
 
         {!isProcessing ? (
-          <form onSubmit={handleSync} className="space-y-4">
+          <>
+            {backendAvailable === false && (
+              <div className="mb-4 p-4 bg-amber-50/90 border border-amber-200/90 rounded-2xl text-left flex gap-3 text-amber-900 text-xs leading-relaxed animate-fade-in">
+                <AlertCircle className="shrink-0 text-amber-600 mt-0.5" size={18} />
+                <div>
+                  <p className="font-bold text-amber-950 mb-1">Desktop Scraping Runner Required</p>
+                  <p className="text-amber-800">
+                    Live portal syncing uses Playwright (automated Chromium browser engine) which runs via the local desktop launcher (<code className="px-1.5 py-0.5 bg-amber-100 rounded text-amber-950 font-mono text-[11px]">start_app.bat</code>). On web & mobile, update your attendance by uploading your newest attendance PDF directly!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSync} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                 SAP Student ID
@@ -224,6 +242,7 @@ export default function SyncModal({ isOpen, onClose, onSuccess }: Props) {
               </button>
             </div>
           </form>
+        </>
         ) : (
           <div className="py-2 animate-fade-in">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">

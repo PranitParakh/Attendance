@@ -18,10 +18,15 @@ This file records meaningful project changes in reverse chronological order (new
 - **SPA Routing & Assets:**
   - `_redirects` verified on Cloudflare Pages (`/* /index.html 200`), ensuring deep React Router routes (`/dashboard`, `/setup`, `/subject/:subjectName`) reload cleanly without 404s.
   - In-browser PDF parser (`pdf.worker.min-*.mjs`) and PWA manifest (`manifest.json`) successfully bundled and deployed.
+- **Backend Detection & Web/Mobile Portal Guidance:**
+  - Added `isBackendConnected()` probe in `api.ts` to detect whether the local FastAPI + Playwright runner is online.
+  - Added informative guidance banners in `UploadZone.tsx` and `SyncModal.tsx` advising web/mobile users that automated SAP portal scraping requires the local desktop runner (`start_app.bat`), and directing them to use the 100% in-browser PDF upload.
+  - Validated response `Content-Type` in `fetchAttendancePortal` to prevent HTML catch syntax errors when hosted statically.
 
 ### Verification
 - Cloudflare deployment pipeline completed with code 0 (`✨ Success! Build completed.`).
 - All 7 production static assets and `_redirects` uploaded and served globally across Cloudflare edge.
+- Frontend build verified: `tsc && vite build` completed in 1.11s with 0 errors.
 
 ---
 

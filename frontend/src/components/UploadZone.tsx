@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { UploadCloud, FileType, AlertCircle, Loader2, Globe, CheckCircle2, Lock, Sparkles, ExternalLink } from 'lucide-react';
-import { uploadAttendancePDF, fetchAttendancePortal } from '../lib/api';
+import { uploadAttendancePDF, fetchAttendancePortal, isBackendConnected } from '../lib/api';
 import { areAllSubjectsConfigured } from '../lib/subjectUtils';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,6 +24,7 @@ export default function UploadZone() {
   const [password, setPassword] = useState('');
   const [rememberId, setRememberId] = useState(true);
   const [showLiveBrowser, setShowLiveBrowser] = useState(false);
+  const [backendAvailable, setBackendAvailable] = useState<boolean | null>(null);
 
   // Common State
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,12 +35,15 @@ export default function UploadZone() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // Load saved SAP ID on mount
+  // Load saved SAP ID on mount and probe backend
   useEffect(() => {
     const savedId = localStorage.getItem('attendly_sap_id');
     if (savedId) {
       setUsername(savedId);
     }
+    isBackendConnected().then(available => {
+      setBackendAvailable(available);
+    });
   }, []);
 
   // Stepper & timer effect while processing
@@ -312,6 +316,29 @@ export default function UploadZone() {
                       Automatically logs into the SVKM portal, navigates WebDynpro attendance, and pulls your official report.
                     </p>
                   </div>
+
+                  {backendAvailable === false && (
+                    <div className="w-full max-w-md p-4 bg-amber-50/90 border border-amber-200/90 rounded-2xl text-left flex gap-3 text-amber-900 text-xs leading-relaxed animate-fade-in">
+                      <AlertCircle className="shrink-0 text-amber-600 mt-0.5" size={18} />
+                      <div>
+                        <p className="font-bold text-amber-950 mb-1">Desktop Scraping Runner Required</p>
+                        <p className="text-amber-800 mb-2">
+                          Direct SAP portal scraping uses Playwright (automated Chromium browser engine) which runs via the local desktop launcher (<code className="px-1.5 py-0.5 bg-amber-100 rounded text-amber-950 font-mono text-[11px]">start_app.bat</code>).
+                        </p>
+                        <p className="text-amber-950 font-medium">
+                          On web & mobile:{' '}
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('upload')}
+                            className="underline font-bold text-amber-950 hover:text-amber-800 cursor-pointer"
+                          >
+                            Switch to Upload PDF
+                          </button>{' '}
+                          to analyze your attendance report with 100% in-browser privacy!
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <form onSubmit={handleFetch} className="w-full max-w-md flex flex-col gap-4 text-left">
                     <div>
