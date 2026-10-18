@@ -18,10 +18,11 @@ This file records meaningful project changes in reverse chronological order (new
 - **SPA Routing & Assets:**
   - `_redirects` verified on Cloudflare Pages (`/* /index.html 200`), ensuring deep React Router routes (`/dashboard`, `/setup`, `/subject/:subjectName`) reload cleanly without 404s.
   - In-browser PDF parser (`pdf.worker.min-*.mjs`) and PWA manifest (`manifest.json`) successfully bundled and deployed.
-- **Backend Detection & Web/Mobile Portal Guidance:**
-  - Added `isBackendConnected()` probe in `api.ts` to detect whether the local FastAPI + Playwright runner is online.
-  - Added informative guidance banners in `UploadZone.tsx` and `SyncModal.tsx` advising web/mobile users that automated SAP portal scraping requires the local desktop runner (`start_app.bat`), and directing them to use the 100% in-browser PDF upload.
-  - Validated response `Content-Type` in `fetchAttendancePortal` to prevent HTML catch syntax errors when hosted statically.
+- **Backend Containerization & Cloud Deployment Readiness:**
+  - Added `backend/Dockerfile` based on `mcr.microsoft.com/playwright/python:v1.49.1-noble` for deploying the Playwright automation backend to free container clouds (Hugging Face Spaces, Render, or Google Cloud Run).
+  - Updated `CORSMiddleware` in `backend/app/main.py` to allow `https://attendance-9co.pages.dev` and all `*.pages.dev` subdomains.
+  - Forced headless mode execution on Linux/container environments in `main.py`.
+  - Added configurable backend URL support in `frontend/src/lib/api.ts` via `VITE_API_URL` and `attendly_api_base_url` localStorage override.
 
 ### Verification
 - Cloudflare deployment pipeline completed with code 0 (`✨ Success! Build completed.`).

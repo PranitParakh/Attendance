@@ -40,10 +40,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS - allow local frontend
+# CORS - allow local frontend and Cloudflare Pages production origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "https://attendance-9co.pages.dev",
+        "https://attendance.pages.dev",
+    ],
+    allow_origin_regex=r"https://.*\.pages\.dev",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -171,11 +178,12 @@ async def fetch_attendance(req: FetchRequest):
     """
     try:
         from app.scraper import run_scraper_in_proactor_loop
+        force_headless = bool(req.headless) or sys.platform != 'win32' or os.getenv('HEADLESS', '').lower() == 'true'
         pdf_bytes = await asyncio.to_thread(
             run_scraper_in_proactor_loop,
             req.username,
             req.password,
-            bool(req.headless)
+            force_headless
         )
     except Exception as e:
         return UploadResponse(

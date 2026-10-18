@@ -11,7 +11,27 @@ import {
   calculateOverallSummary,
 } from './clientParser';
 
-const API_BASE = '/api';
+// Dynamic API base: checks environment variable, then localStorage override, then defaults to '/api'
+export function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const custom = localStorage.getItem('attendly_api_base_url');
+    if (custom) return custom.replace(/\/+$/, '');
+  }
+  const envUrl = (import.meta.env.VITE_API_URL as string);
+  if (envUrl) return envUrl.replace(/\/+$/, '');
+  return '/api';
+}
+
+export function setApiBaseUrl(url: string | null): void {
+  if (typeof window !== 'undefined') {
+    if (url) {
+      localStorage.setItem('attendly_api_base_url', url.replace(/\/+$/, ''));
+    } else {
+      localStorage.removeItem('attendly_api_base_url');
+    }
+  }
+}
+
 const DATASET_STORAGE_KEY = 'attendly_saved_dataset';
 
 export class ApiError extends Error {
@@ -58,7 +78,7 @@ export async function uploadAttendancePDF(file: File): Promise<UploadResponse> {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      fetch(`${API_BASE}/attendance/upload`, {
+      fetch(`${getApiBaseUrl()}/attendance/upload`, {
         method: 'POST',
         body: formData,
       }).catch(() => {
@@ -104,7 +124,7 @@ export async function getCurrentAttendance(): Promise<AttendanceDataset> {
 
   // 2. Fall back to backend if available
   try {
-    const response = await fetch(`${API_BASE}/attendance/current`);
+    const response = await fetch(`${getApiBaseUrl()}/attendance/current`);
     if (response.ok) {
       const data: AttendanceDataset = await response.json();
       try {
@@ -147,7 +167,7 @@ export async function getSubjectDetail(subjectName: string): Promise<SubjectDeta
 
   // Fallback to backend API
   const encoded = encodeURIComponent(subjectName);
-  const response = await fetch(`${API_BASE}/attendance/subjects/${encoded}`);
+  const response = await fetch(`${getApiBaseUrl()}/attendance/subjects/${encoded}`);
   if (!response.ok) {
     throw new ApiError(`Subject '${decoded}' not found`, response.status);
   }
@@ -162,7 +182,7 @@ export async function deleteCurrentAttendance(): Promise<void> {
   localStorage.removeItem(DATASET_STORAGE_KEY);
 
   try {
-    await fetch(`${API_BASE}/attendance/current`, {
+    await fetch(`${getApiBaseUrl()}/attendance/current`, {
       method: 'DELETE',
     });
   } catch {
@@ -175,7 +195,7 @@ export async function deleteCurrentAttendance(): Promise<void> {
  */
 export async function isBackendConnected(): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(1500) });
+    const res = await fetch(`${getApiBaseUrl()}/health`, { signal: AbortSignal.timeout(1500) });
     const contentType = res.headers.get('content-type') || '';
     return res.ok && contentType.includes('application/json');
   } catch {
@@ -200,7 +220,7 @@ export async function fetchAttendancePortal(
   headless: boolean = false
 ): Promise<UploadResponse> {
   try {
-    const response = await fetch(`${API_BASE}/attendance/fetch`, {
+    const response = await fetch(`${getApiBaseUrl()}/attendance/fetch`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
