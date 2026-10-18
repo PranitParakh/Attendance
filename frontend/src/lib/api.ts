@@ -11,7 +11,10 @@ import {
   calculateOverallSummary,
 } from './clientParser';
 
-// Dynamic API base: checks environment variable, then localStorage override, then defaults to '/api'
+const DEFAULT_CLOUD_API = 'https://attendance-1xra.onrender.com/api';
+
+// Dynamic API base: checks localStorage override, then environment variable,
+// then falls back to local dev proxy on localhost, or the live cloud backend in production.
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const custom = localStorage.getItem('attendly_api_base_url');
@@ -19,7 +22,14 @@ export function getApiBaseUrl(): string {
   }
   const envUrl = (import.meta.env.VITE_API_URL as string);
   if (envUrl) return envUrl.replace(/\/+$/, '');
-  return '/api';
+
+  // If running locally in development, use local Vite proxy
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return '/api';
+  }
+
+  // When deployed online (Cloudflare Pages, Android PWA, etc.), use the live Render backend
+  return DEFAULT_CLOUD_API;
 }
 
 export function setApiBaseUrl(url: string | null): void {

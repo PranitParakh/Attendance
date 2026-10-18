@@ -312,29 +312,32 @@ export default function UploadZone() {
 
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 mb-1.5">Direct SAP Portal Sync</h3>
-                    <p className="text-slate-500 max-w-md mx-auto text-xs leading-relaxed">
+                    <p className="text-slate-500 max-w-md mx-auto text-xs leading-relaxed mb-3">
                       Automatically logs into the SVKM portal, navigates WebDynpro attendance, and pulls your official report.
                     </p>
+                    {backendAvailable === true && (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-emerald-700 text-xs font-medium">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Cloud Portal Scraper Active
+                      </div>
+                    )}
                   </div>
 
                   {backendAvailable === false && (
-                    <div className="w-full max-w-md p-4 bg-amber-50/90 border border-amber-200/90 rounded-2xl text-left flex gap-3 text-amber-900 text-xs leading-relaxed animate-fade-in">
-                      <AlertCircle className="shrink-0 text-amber-600 mt-0.5" size={18} />
+                    <div className="w-full max-w-md p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-left flex gap-2.5 text-slate-700 text-xs leading-relaxed animate-fade-in">
+                      <AlertCircle className="shrink-0 text-amber-500 mt-0.5" size={16} />
                       <div>
-                        <p className="font-bold text-amber-950 mb-1">Desktop Scraping Runner Required</p>
-                        <p className="text-amber-800 mb-2">
-                          Direct SAP portal scraping uses Playwright (automated Chromium browser engine) which runs via the local desktop launcher (<code className="px-1.5 py-0.5 bg-amber-100 rounded text-amber-950 font-mono text-[11px]">start_app.bat</code>).
-                        </p>
-                        <p className="text-amber-950 font-medium">
-                          On web & mobile:{' '}
+                        <p className="font-semibold text-slate-900 mb-0.5">Cloud Scraper Initializing</p>
+                        <p className="text-slate-500 text-[11px] leading-relaxed">
+                          The cloud scraper takes a few moments to spin up on first request. You can proceed with login, or use the{' '}
                           <button
                             type="button"
                             onClick={() => setActiveTab('upload')}
-                            className="underline font-bold text-amber-950 hover:text-amber-800 cursor-pointer"
+                            className="underline font-semibold text-slate-700 hover:text-slate-900"
                           >
-                            Switch to Upload PDF
+                            Upload PDF
                           </button>{' '}
-                          to analyze your attendance report with 100% in-browser privacy!
+                          tab for instant offline analysis.
                         </p>
                       </div>
                     </div>

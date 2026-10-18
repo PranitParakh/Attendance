@@ -138,13 +138,19 @@ export default function SyncModal({ isOpen, onClose, onSuccess }: Props) {
 
         {!isProcessing ? (
           <>
+            {backendAvailable === true && (
+              <div className="mb-4 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Cloud Scraper is online and ready to fetch your report</span>
+              </div>
+            )}
             {backendAvailable === false && (
-              <div className="mb-4 p-4 bg-amber-50/90 border border-amber-200/90 rounded-2xl text-left flex gap-3 text-amber-900 text-xs leading-relaxed animate-fade-in">
-                <AlertCircle className="shrink-0 text-amber-600 mt-0.5" size={18} />
+              <div className="mb-4 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-left flex gap-2.5 text-slate-700 text-xs leading-relaxed animate-fade-in">
+                <AlertCircle className="shrink-0 text-amber-500 mt-0.5" size={16} />
                 <div>
-                  <p className="font-bold text-amber-950 mb-1">Desktop Scraping Runner Required</p>
-                  <p className="text-amber-800">
-                    Live portal syncing uses Playwright (automated Chromium browser engine) which runs via the local desktop launcher (<code className="px-1.5 py-0.5 bg-amber-100 rounded text-amber-950 font-mono text-[11px]">start_app.bat</code>). On web & mobile, update your attendance by uploading your newest attendance PDF directly!
+                  <p className="font-semibold text-slate-900 mb-0.5">Cloud Scraper Initializing</p>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    The free cloud server is waking up. You can start sync now (may take ~20-30s), or upload your attendance PDF directly on the homepage.
                   </p>
                 </div>
               </div>

@@ -43,10 +43,11 @@
     - Build command: `npm run build`
     - Deploy command: `(npx wrangler pages project create attendance --production-branch main || true) && npx wrangler pages deploy dist --project-name attendance`
     - Preview command: `(npx wrangler pages project create attendance --production-branch main || true) && npx wrangler pages deploy dist --project-name attendance --branch preview`
-  - **Online Portal Scraping Cloud Backend (Docker):**
-    - `backend/Dockerfile` based on `mcr.microsoft.com/playwright/python:v1.49.1-noble` for zero-cost deployment on platforms like Hugging Face Spaces (16GB RAM free), Render.com, or Google Cloud Run.
+  - **Online Portal Scraping Cloud Backend (Docker on Render):**
+    - **Live Backend API:** `https://attendance-1xra.onrender.com` (Verified active and healthy).
+    - `backend/Dockerfile` based on `mcr.microsoft.com/playwright/python:v1.49.1-noble` deployed on Render (free tier, Singapore region).
     - CORS configured in `backend/app/main.py` for `https://attendance-9co.pages.dev` and all `*.pages.dev` origins.
-    - Frontend supports dynamic API base via `VITE_API_URL` environment variable or `attendly_api_base_url` in localStorage.
+    - Frontend automatically defaults to `https://attendance-1xra.onrender.com/api` when deployed on Cloudflare Pages or accessed via Android/iOS, while preserving local `/api` proxy in dev.
   - 100% Free Hosting Supported (Cloudflare Pages, Vercel, Netlify, GitHub Pages).
   - Pure client-side operation: parsing, normalization, curriculum configurations, NU simulations, and calculations run in the user's browser with local persistence.
   - Progressive Web App (PWA) readiness with `manifest.json`, responsive touch viewports for Android & PC.

@@ -18,16 +18,17 @@ This file records meaningful project changes in reverse chronological order (new
 - **SPA Routing & Assets:**
   - `_redirects` verified on Cloudflare Pages (`/* /index.html 200`), ensuring deep React Router routes (`/dashboard`, `/setup`, `/subject/:subjectName`) reload cleanly without 404s.
   - In-browser PDF parser (`pdf.worker.min-*.mjs`) and PWA manifest (`manifest.json`) successfully bundled and deployed.
-- **Backend Containerization & Cloud Deployment Readiness:**
-  - Added `backend/Dockerfile` based on `mcr.microsoft.com/playwright/python:v1.49.1-noble` for deploying the Playwright automation backend to free container clouds (Hugging Face Spaces, Render, or Google Cloud Run).
+- **Backend Containerization & Cloud Deployment on Render:**
+  - Added `backend/Dockerfile` based on `mcr.microsoft.com/playwright/python:v1.49.1-noble` and `render.yaml` for 1-click cloud deployment.
+  - Successfully deployed backend to Render free tier at `https://attendance-1xra.onrender.com` (Singapore region).
   - Updated `CORSMiddleware` in `backend/app/main.py` to allow `https://attendance-9co.pages.dev` and all `*.pages.dev` subdomains.
-  - Forced headless mode execution on Linux/container environments in `main.py`.
-  - Added configurable backend URL support in `frontend/src/lib/api.ts` via `VITE_API_URL` and `attendly_api_base_url` localStorage override.
+  - Configured frontend (`frontend/src/lib/api.ts`) to automatically route to `https://attendance-1xra.onrender.com/api` when accessed online from any device, enabling online SAP portal scraping across PC, Android, and iOS.
+  - Enhanced `UploadZone.tsx` and `SyncModal.tsx` with dynamic cloud status indicator ("Cloud Portal Scraper Active").
 
 ### Verification
 - Cloudflare deployment pipeline completed with code 0 (`✨ Success! Build completed.`).
-- All 7 production static assets and `_redirects` uploaded and served globally across Cloudflare edge.
-- Frontend build verified: `tsc && vite build` completed in 1.11s with 0 errors.
+- Render health endpoint (`https://attendance-1xra.onrender.com/api/health`) verified returning `{"status":"ok","service":"attendly"}`.
+- Frontend build verified: `tsc && vite build` completed in 1.16s with 0 errors.
 
 ---
 
