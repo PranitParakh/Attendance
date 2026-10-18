@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: attendly-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: singapore
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: HEADLESS
+        value: "true"
