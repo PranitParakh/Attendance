@@ -5,7 +5,8 @@
 - **Purpose:** Attendly is a local, private web application for analyzing NMIMS SAP attendance reports.
 - **Current status:** Phase 1 is complete.
 - **Repository:** `https://github.com/PranitParakh/Attendance.git` (tracked on branch `main`)
-- **Main features:** PDF parsing, course normalization, attendance calculations, local SQLite persistence, React dashboard, and automated SAP portal sync via Playwright.
+- **Live Deployment:** `https://attendance-9co.pages.dev` (Hosted on Cloudflare Pages, 100% free serverless architecture)
+- **Main features:** In-browser PDF parsing, course normalization, attendance calculations, client-side persistence, React dashboard, PWA support for Android/PC, and optional local backend portal sync.
 
 ## 2. Technology Stack
 
@@ -36,7 +37,13 @@
   - `recharts` (^3.10.1)
   - Dev: `typescript` (~6.0.2), `@vitejs/plugin-react` (^6.1.1), `vite` (^8.3.0)
 - **Deployment & Hosting:**
-  - 100% Free Hosting Supported (Vercel, Cloudflare Pages, Netlify, GitHub Pages).
+  - **Live URL:** `https://attendance-9co.pages.dev` (Cloudflare Pages project: `attendance`).
+  - **Cloudflare CI/CD Settings:**
+    - Root / Path: `frontend`
+    - Build command: `npm run build`
+    - Deploy command: `(npx wrangler pages project create attendance --production-branch main || true) && npx wrangler pages deploy dist --project-name attendance`
+    - Preview command: `(npx wrangler pages project create attendance --production-branch main || true) && npx wrangler pages deploy dist --project-name attendance --branch preview`
+  - 100% Free Hosting Supported (Cloudflare Pages, Vercel, Netlify, GitHub Pages).
   - Pure client-side operation: parsing, normalization, curriculum configurations, NU simulations, and calculations run in the user's browser with local persistence.
   - Progressive Web App (PWA) readiness with `manifest.json`, responsive touch viewports for Android & PC.
 

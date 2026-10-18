@@ -4,6 +4,27 @@ This file records meaningful project changes in reverse chronological order (new
 
 ---
 
+## 2026-10-18 — Cloudflare Pages CI/CD & Production Deployment Live
+
+### Deployed
+- **Cloudflare Pages Production Release:**
+  - Project created and connected via Cloudflare CI: `attendance`.
+  - Production URL live at `https://attendance-9co.pages.dev`.
+  - Deployment preview URL: `https://07f755bf.attendance-9co.pages.dev`.
+  - Configured resilient build and deploy commands using Wrangler with automated project verification:
+    - Build: `npm run build`
+    - Deploy: `(npx wrangler pages project create attendance --production-branch main || true) && npx wrangler pages deploy dist --project-name attendance`
+    - Preview: `(npx wrangler pages project create attendance --production-branch main || true) && npx wrangler pages deploy dist --project-name attendance --branch preview`
+- **SPA Routing & Assets:**
+  - `_redirects` verified on Cloudflare Pages (`/* /index.html 200`), ensuring deep React Router routes (`/dashboard`, `/setup`, `/subject/:subjectName`) reload cleanly without 404s.
+  - In-browser PDF parser (`pdf.worker.min-*.mjs`) and PWA manifest (`manifest.json`) successfully bundled and deployed.
+
+### Verification
+- Cloudflare deployment pipeline completed with code 0 (`✨ Success! Build completed.`).
+- All 7 production static assets and `_redirects` uploaded and served globally across Cloudflare edge.
+
+---
+
 ## 2026-10-16 — Security Purge, Codebase Cleanup & Git Repository Initialization
 
 ### Removed & Purged
