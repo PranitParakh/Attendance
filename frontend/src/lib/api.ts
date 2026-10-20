@@ -115,6 +115,58 @@ export async function uploadAttendancePDF(file: File): Promise<UploadResponse> {
 }
 
 /**
+ * Imports and parses a Base64 encoded PDF string (from 1-Tap Sync or Bookmarklet).
+ * Decodes the base64, runs client-side parsing via PDF.js, and saves to localStorage.
+ */
+export async function importBase64Pdf(
+  base64Data: string,
+  filename: string = 'portal_sync.pdf'
+): Promise<UploadResponse> {
+  try {
+    const cleanBase64 = base64Data.replace(/^data:application\/pdf;base64,/, '').trim();
+    const binaryString = atob(cleanBase64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    const { metadata, records } = await parseAttendancePdf(bytes, filename);
+    const subjects = calculateSubjectSummaries(records);
+    const overall = calculateOverallSummary(records, subjects);
+
+    const dataset: AttendanceDataset = {
+      metadata,
+      records,
+      subjects,
+      overall,
+      imported_at: new Date().toISOString(),
+      source_filename: filename,
+    };
+
+    try {
+      localStorage.setItem(DATASET_STORAGE_KEY, JSON.stringify(dataset));
+    } catch (storageErr) {
+      console.warn('Could not cache dataset in localStorage:', storageErr);
+    }
+
+    return {
+      success: true,
+      message: 'Attendance imported successfully via 1-Tap Portal Sync',
+      dataset,
+      records_count: records.length,
+      error: null,
+    };
+  } catch (err: any) {
+    console.error('1-Tap Sync PDF parsing error:', err);
+    throw new ApiError(
+      err?.message || 'Unable to parse synchronized attendance report.',
+      400
+    );
+  }
+}
+
+
+/**
  * Get current attendance dataset.
  * Checks localStorage first, then falls back to backend if available.
  */

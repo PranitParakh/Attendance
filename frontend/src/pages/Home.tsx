@@ -1,5 +1,5 @@
 import UploadZone from '../components/UploadZone';
-import { getCurrentAttendance } from '../lib/api';
+import { getCurrentAttendance, importBase64Pdf } from '../lib/api';
 import { areAllSubjectsConfigured } from '../lib/subjectUtils';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,8 +10,30 @@ export default function Home() {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Check if we already have data loaded
-    const checkExistingData = async () => {
+    const handleSyncFromHashOrStorage = async () => {
+      // 1. Check for incoming 1-Tap Sync hash payload (#sync=...)
+      const hash = window.location.hash;
+      if (hash && hash.includes('sync=')) {
+        try {
+          const match = hash.match(/sync=([^&]+)/);
+          if (match && match[1]) {
+            const raw = decodeURIComponent(match[1]);
+            const response = await importBase64Pdf(raw);
+            window.history.replaceState(null, '', window.location.pathname);
+            if (response.dataset && areAllSubjectsConfigured(response.dataset.subjects)) {
+              navigate('/dashboard');
+            } else {
+              navigate('/setup');
+            }
+            return;
+          }
+        } catch (err) {
+          console.error('Failed to process #sync hash:', err);
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      }
+
+      // 2. Check if we already have data loaded
       try {
         const dataset = await getCurrentAttendance();
         if (areAllSubjectsConfigured(dataset.subjects)) {
@@ -25,7 +47,7 @@ export default function Home() {
       }
     };
     
-    checkExistingData();
+    handleSyncFromHashOrStorage();
   }, [navigate]);
 
   if (isChecking) {

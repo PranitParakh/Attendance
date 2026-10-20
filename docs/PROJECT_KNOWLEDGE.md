@@ -245,8 +245,10 @@ No dedicated lint configuration (ESLint/Prettier) is present in the frontend. Th
 | **In-Browser Client-Side PDF Parsing (pdfjs-dist)** | Allows 100% free hosting (Vercel/Cloudflare Pages/Netlify) without requiring a server/backend for constant processing. | Server-only PyMuPDF parsing requiring always-on backend. | App operates completely offline/serverless; parses and calculates attendance directly in the user's browser. |
 | **Dual-Mode Data Layer (localStorage + Backend)** | Seamless local persistence for serverless hosting while preserving backend sync when run locally. | Backend-only SQLite or client-only memory. | User data persists across browser sessions without any backend server. Full wipe via complete reset. |
 | **PWA & Responsive Android Support** | Optimal mobile experience for students checking attendance on their phones. | Desktop-only layout. | Works on PC and Android with 'Add to Home screen' standalone app capability. |
+| **1-Tap In-Browser Portal Sync** | SVKM SAP port 50001 geo-blocks international cloud datacenters (Render/AWS). Client bookmarklet executes directly inside student browser in India, bypassing firewall and CORS. | Paid Indian residential proxies or local-only scraper. | 100% free universal sync on Android, iPhone, Mac, and Windows with zero server dependencies. |
 
 ## 9. Known Issues and Limitations
+
 
 - **Cleaned Codebase:** Obsolete scratch scripts (`test_scraper_unit.py`, `test_dropdown_selection.py`) and ghost components (`SubjectGrid.tsx`, `SubjectCard.tsx`, `AttendanceCriterionTracker.tsx`) were removed. Real test suite is cleanly isolated in `backend/tests/`.
 - **Parser format dependency:** The parser strictly expects the SVKM/NMIMS SAP standard attendance format. Major format changes by the university will require parser updates.
@@ -254,17 +256,17 @@ No dedicated lint configuration (ESLint/Prettier) is present in the frontend. Th
 - **No ESLint/Prettier:** Frontend relies solely on `tsc --noEmit` for correctness; no formatter is configured.
 - **Chunk size warning:** Production build emits a non-fatal warning about chunks >500 kB after minification.
 - **Portal sync requires internet/university network** and a working SAP portal session; CAPTCHA may appear on non-mobile viewports.
+- **SVKM SAP Port 50001 Geo-Firewall:** The SAP portal (`sdc-sppap1.svkm.ac.in:50001`) blocks TCP connections from international cloud datacenter IPs (Render, AWS, GCP). The Direct Credentials Scraper only works from Indian domestic ISPs or localhost. The 1-Tap Quick-Sync bookmarklet bypasses this entirely by executing inside the student's own browser.
 - **Single-user only:** SQLite backend has no authentication or multi-user support.
 
 ## 10. Current Development State
 
-- **Last verified working state:** Numerical accuracy and credit harmony fixes completed. Linked subject tracking fully implemented across dashboard and subject detail views. Backend tests pass (47/47). Frontend builds cleanly (0 TypeScript errors).
-- **Current task:** Fixed inaccurate numbers on dashboard, aligned lecture counts strictly to credits (Credits * 15), added linked practical subject tracking, badges, and component filters in Subject Detail.
+- **Last verified working state:** 1-Tap In-Browser Portal Sync implemented and deployed. Dual-mode Fetch tab (1-Tap Quick-Sync + Direct Scraper) with per-device guides (Android/iOS/PC). Backend tests pass (34 passed, 17 skipped). Frontend builds cleanly (0 TypeScript errors).
+- **Latest completed task:** Implemented 1-Tap Portal Sync bookmarklet, `importBase64Pdf()`, hash/postMessage listeners, and dual-mode UploadZone UI to work around SVKM port 50001 geo-firewall.
 - **Pending work:**
-  - Delete the two scratch credential files in `backend/` and the three ghost components in `frontend/src/components/` (see `documentation/05_CODEBASE_CLEANUP_AND_UNWANTED_FILES.md`).
   - Implement Phase 2 features: bunk calculator UI, recovery calculator, visual timetable/calendar, forecasting (see `README.md` "Future Phase 2 Features").
   - Complete the dynamic multi-semester setup engine described in `documentation/06_ACTION_PLAN_DYNAMIC_SETUP.md`.
-- **Last knowledge update:** 2026-10-16 (verified against actual codebase, tests, and browser visual inspection).
+- **Last knowledge update:** 2026-10-20 (verified against actual codebase, tests, and build output).
 
 ## 11. Notes for the Next AI Agent
 

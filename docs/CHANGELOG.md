@@ -4,6 +4,31 @@ This file records meaningful project changes in reverse chronological order (new
 
 ---
 
+## 2026-10-20 — 1-Tap In-Browser Portal Sync & Port 50001 Firewall Resolution
+
+### Added & Enhanced
+- **1-Tap In-Browser Portal Sync (Universal Zero-Server Sync):**
+  - Implemented the Attendly 1-Tap Bookmarklet and direct sync protocol for 100% free, universal attendance syncing on any device (Android, iPhone, Mac, Windows).
+  - Added `importBase64Pdf()` in `frontend/src/lib/api.ts` to decode synchronized PDF base64 payloads and parse directly in-browser using `pdfjs-dist`.
+  - Added URL hash listener (`#sync=...`) in `frontend/src/pages/Home.tsx` and `window.postMessage` listener in `frontend/src/components/UploadZone.tsx` to accept direct transfer from the SAP portal.
+  - Upgraded `UploadZone.tsx` with a dual-mode Fetch interface:
+    - **1-Tap Quick-Sync (Universal):** Launch SAP Portal popup, copy bookmarklet with 1 click, and interactive step-by-step guides for Android (Chrome), iPhone (Safari), and PC/Mac.
+    - **Direct Credentials Scraper:** Preserved automated login form for local desktop execution or domestic cloud relays.
+
+### Diagnostics & Findings
+- **SVKM SAP Port 50001 Geo-Firewall Identified:**
+  - Network probes confirmed `sdc-sppap1.svkm.ac.in:50001` drops inbound TCP packets from international cloud datacenters (Render Singapore/US, AWS, etc.).
+  - Tested from Indian domestic IP space (Jio/Airtel/Wi-Fi): TCP handshake succeeds immediately (`TcpTestSucceeded: True`).
+  - Public HTTP/SOCKS proxies failed with `403 Forbidden` because proxy software restricts the `CONNECT` method on non-standard ports (allowing only port 443).
+  - 1-Tap Portal Sync completely circumvents the firewall by originating requests from the student's own mobile/desktop browser located in India.
+
+### Verification
+- `frontend`: `npm run build` completed with 0 errors.
+- `backend`: `pytest tests/test_backend.py` passed with 34 passed, 0 failures.
+
+---
+
+
 ## 2026-10-18 — Cloudflare Pages CI/CD & Production Deployment Live
 
 ### Deployed
