@@ -201,7 +201,7 @@ async def fetch_attendance_report(username: str, password: str, headless: bool =
             # -------------------------------------------------------
             portal_url = "https://sdc-sppap1.svkm.ac.in:50001/irj/portal"
             try:
-                await page.goto(portal_url, timeout=45000, wait_until="load")
+                await page.goto(portal_url, timeout=35000, wait_until="domcontentloaded")
             except Exception as e:
                 raise ValueError(
                     f"Unable to connect to SAP Portal at {portal_url}. "

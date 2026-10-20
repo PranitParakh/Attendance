@@ -69,6 +69,34 @@ def health_check():
     return {"status": "ok", "service": "attendly"}
 
 
+@app.get("/api/diagnostic/network")
+def diagnostic_network():
+    """Diagnostic endpoint to inspect portal connectivity from the cloud host."""
+    import socket
+    results = {}
+    try:
+        ip = socket.gethostbyname("sdc-sppap1.svkm.ac.in")
+        results["dns_sdc"] = {"host": "sdc-sppap1.svkm.ac.in", "ip": ip, "status": "ok"}
+    except Exception as e:
+        results["dns_sdc"] = {"host": "sdc-sppap1.svkm.ac.in", "error": str(e), "status": "failed"}
+
+    try:
+        s = socket.create_connection(("sdc-sppap1.svkm.ac.in", 50001), timeout=6)
+        s.close()
+        results["tcp_50001"] = {"status": "connected"}
+    except Exception as e:
+        results["tcp_50001"] = {"status": "failed", "error": str(e)}
+
+    try:
+        s = socket.create_connection(("portal.svkm.ac.in", 443), timeout=6)
+        s.close()
+        results["tcp_portal_443"] = {"status": "connected"}
+    except Exception as e:
+        results["tcp_portal_443"] = {"status": "failed", "error": str(e)}
+
+    return results
+
+
 @app.post("/api/attendance/upload", response_model=UploadResponse)
 async def upload_attendance(file: UploadFile = File(...)):
     """
